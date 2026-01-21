@@ -290,7 +290,6 @@ ADD_SUBDIRECTORY(libs)
 if(OpenMVS_BUILD_TOOLS)
 	ADD_SUBDIRECTORY(apps)
 endif()
-ADD_SUBDIRECTORY(docs)
 
 if (OpenMVS_ENABLE_TESTS)
 	# enable testing functionality

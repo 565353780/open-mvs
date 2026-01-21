@@ -12,6 +12,11 @@
 
 #include "ConfigLocal.h"
 
+// Fallback for compilers that do not support __has_builtin
+#ifndef __has_builtin
+#	define __has_builtin(x) 0
+#endif
+
 
 // D E F I N E S ///////////////////////////////////////////////////
 
