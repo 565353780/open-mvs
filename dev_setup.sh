@@ -2,12 +2,12 @@ cd ..
 git clone --depth 1 https://github.com/cnr-isti-vclab/vcglib.git
 
 conda install cmake -y
-
 conda install -c conda-forge eigen opencv ceres-solver \
   cgal boost glfw nanoflann libjxl glad -y
 
 cd open-mvs
 
+rm -rf make
 mkdir make
 cd make
 

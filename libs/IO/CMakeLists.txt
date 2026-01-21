@@ -1,7 +1,7 @@
 # Macro to check pkg-config modules and produce a full-path library list
 macro(pkg_check_modules_fullpath_libs PREFIX MODULE_NAME)
-	# Call pkg_check_modules
-	pkg_check_modules(${PREFIX} REQUIRED IMPORTED_TARGET ${MODULE_NAME})
+	# Call pkg_check_modules (without REQUIRED to allow fallback)
+	pkg_check_modules(${PREFIX} QUIET IMPORTED_TARGET ${MODULE_NAME})
 	if(${PREFIX}_FOUND)
 		set(${PREFIX}_FULLPATH_LIBRARIES "" PARENT_SCOPE)
 		foreach(lib ${${PREFIX}_LIBRARIES})
@@ -60,13 +60,47 @@ if(JPEG_FOUND)
 else()
 	SET(JPEG_LIBRARIES "")
 endif()
-FIND_PACKAGE(PkgConfig REQUIRED)
-pkg_check_modules_fullpath_libs(JPEGXL libjxl)
+# Try to find libjxl via pkg-config first
+FIND_PACKAGE(PkgConfig QUIET)
+if(PkgConfig_FOUND)
+	pkg_check_modules_fullpath_libs(JPEGXL libjxl)
+endif()
+
+# Fallback: if pkg-config didn't find it, try direct library search
+if(NOT JPEGXL_FOUND)
+	# Try to find libjxl directly
+	find_path(JPEGXL_INCLUDE_DIR jxl/decode.h
+		PATHS ${CMAKE_PREFIX_PATH}/include
+		      $ENV{CONDA_PREFIX}/include
+		      /usr/include
+		      /usr/local/include
+	)
+	find_library(JPEGXL_LIBRARY
+		NAMES jxl
+		PATHS ${CMAKE_PREFIX_PATH}/lib
+		      $ENV{CONDA_PREFIX}/lib
+		      /usr/lib
+		      /usr/local/lib
+	)
+	
+	if(JPEGXL_INCLUDE_DIR AND JPEGXL_LIBRARY)
+		set(JPEGXL_FOUND TRUE)
+		set(JPEGXL_INCLUDE_DIRS ${JPEGXL_INCLUDE_DIR})
+		set(JPEGXL_LIBRARIES ${JPEGXL_LIBRARY})
+		include_directories(${JPEGXL_INCLUDE_DIRS})
+		message(STATUS "Found libjxl via direct search: ${JPEGXL_LIBRARY}")
+	endif()
+endif()
+
 if(JPEGXL_FOUND)
 	SET(_USE_JXL TRUE CACHE INTERNAL "")
-	set(JPEGXL_LIBRARIES ${JPEGXL_FULLPATH_LIBRARIES})
+	# Ensure include directories are set (for direct search path)
+	if(JPEGXL_INCLUDE_DIRS)
+		include_directories(${JPEGXL_INCLUDE_DIRS})
+	endif()
 else()
 	SET(JPEGXL_LIBRARIES "")
+	message(STATUS "libjxl not found, JPEG-XL support will be disabled")
 endif()
 FIND_PACKAGE(TIFF QUIET)
 if(TIFF_FOUND)
